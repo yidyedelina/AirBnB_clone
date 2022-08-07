@@ -1,16 +1,29 @@
 #!/usr/bin/python3
-"""The command interpreter"""
+"""The command interpreter for the Back-End"""
 
 import cmd
 import models
+from shlex import split
 from models.user import User
+from models.state import State
+from models.city import City
+from models.amenity import Amenity
+from models.place import Place
+from models.review import Review
 from models.base_model import BaseModel
 from models.engine.file_storage import FileStorage
 
 
 class HBNBCommand(cmd.Cmd):
+    """Class for the command interpreter"""
     prompt = "(hbnb) "
-    allowed_obj = ["BaseModel", "User"]
+    allowed_obj = ["BaseModel",
+                   "User",
+                   "Amenity",
+                   "City",
+                   "Place",
+                   "Review",
+                   "State"]
 
     def do_quit(self, args):
         """Quit command to exit the program\n"""
@@ -25,17 +38,24 @@ class HBNBCommand(cmd.Cmd):
         cmd.Cmd.do_help(self, args)
 
     def do_create(self, args):
-        """Creates a new instance of Basemodel,
-        saves it (to the JSON file) and prints the
-        id"""
-        if not args:
+        """Usage: create <class> <key 1>=<value 2> <key 2>=<value 2> ...
+        Create a new class instance with given keys/values and print its id."""
+        my_list = args.split()
+        if not my_list:
             print("** class name missing **")
-        elif args not in HBNBCommand.allowed_obj:
+        elif my_list[0] not in HBNBCommand.allowed_obj:
             print("** class doesn't exist **")
         else:
-            new_instance = BaseModel()
-            models.storage.save()
-            print(new_instance.id)
+            my_object = eval(my_list[0] + '()')
+
+            for i in range(1, len(my_list)):
+                res = my_list[i].split('=')
+                res[1] = res[1].replace('_', ' ')
+                setattr(my_object, res[0], res[1])
+
+            my_object.save()
+            print(my_object.id)
+
 
     def do_show(self, args):
         """Prints the string representation of an instance
@@ -43,7 +63,7 @@ class HBNBCommand(cmd.Cmd):
         list_str = args.split()
         if not list_str:
             print("** class name missing **")
-        elif args not in HBNBCommand.allowed_obj:
+        elif list_str[0] not in HBNBCommand.allowed_obj:
             print("** class doesn't exist **")
         elif len(list_str) == 1:
             print("** instance id missing **")
@@ -61,7 +81,7 @@ class HBNBCommand(cmd.Cmd):
         list_str = args.split()
         if not list_str:
             print("** class name missing **")
-        elif args not in HBNBCommand.allowed_obj:
+        elif list_str[0] not in HBNBCommand.allowed_obj:
             print("** class doesn't exist **")
         elif len(list_str) == 1:
             print("** instance id missing **")
@@ -77,7 +97,8 @@ class HBNBCommand(cmd.Cmd):
     def do_all(self, args):
         """Prints all string representation of all instances
         based or not on the class name"""
-        if not args or args in HBNBCommand.allowed_obj:
+        list_str = args.split()
+        if not args or list_str[0] in HBNBCommand.allowed_obj:
             str_list = []
             objects = models.storage.all()
             for instance in objects.values():
@@ -92,7 +113,7 @@ class HBNBCommand(cmd.Cmd):
         list_str = args.split()
         if not list_str:
             print("** class name missing **")
-        if not args or args in HBNBCommand.allowed_obj:
+        elif list_str[0] not in HBNBCommand.allowed_obj:
             print("** class doesn't exist **")
         elif len(list_str) == 1:
             print("** instance id missing **")
@@ -119,6 +140,7 @@ class HBNBCommand(cmd.Cmd):
         '''empty line
         '''
         pass
+
 
 if __name__ == '__main__':
     HBNBCommand().cmdloop()
